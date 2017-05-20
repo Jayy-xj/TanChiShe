@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<style type="text/css">
+			body {
+				padding: 0;
+				margin: 0;
+				border: 0;
+			}
+			div{
+				margin: auto;
+			}
+			input{
+				margin: auto;
+				display: block;
+				margin-bottom: 5px;
+			}
+		</style>
+	</head>
+
+	<body>
+		<script type="text/javascript">
+		function res(){
+			history.go(0) ;
+		}
+			var default_size = 10;
+			function Map() {
+				this.width = 50; 
+				this.background = 'black';
+				this.height = 50;
+				this.postion = 'relative';
+				this.left = 0;
+				this.top = 0;
+				this._map = null;
+				this.createmap = function() {
+					this._map = document.createElement('div');
+					this._map.style.background = this.background;
+					this._map.style.width = this.width * default_size + 'px';
+					this._map.style.height = this.height * default_size + 'px';
+					this._map.style.left = this.left * default_size + 'px';
+					this._map.style.top = this.top * default_size + 'px';
+					this._map.style.position = this.postion;
+					document.body.appendChild(this._map);
+				}
+			}
+			
+			function Food() {
+				//食物属性：宽高 颜色 定位方式 left属性 top属性
+				this.width = 1;
+				this.height = 1;
+				this.background = 'red';
+				this.position = 'absolute';
+				this.left = 0;
+				this.top = 0;
+				this._food = null;
+				this.createfood = function() {
+					if(!this._food) {
+						//创建节点
+						var food = document.createElement('div');
+						food.style.width = this.width * default_size + 'px';
+						food.style.height = this.height * default_size + 'px';
+						food.style.position = this.position;
+						food.style.background = this.background;
+						map._map.appendChild(food);
+						this._food = food;
+					}
+					this.left = Math.floor(Math.random() * map.width);
+					this.top = Math.floor(Math.random() * map.height);
+					this._food.style.left = this.left * default_size + 'px';
+					this._food.style.top = this.top * default_size + 'px';
+
+				}
+			}
+
+			//创建蛇
+			function Snake() {
+				          var res = document.createElement('input');
+					      res.setAttribute('type','button');
+					      res.setAttribute('value','重新开始');
+					      res.setAttribute('onclick','res()');
+					      document.body.appendChild(res);
+				          var numb = document.createElement('input');
+					      numb.setAttribute('type','text');
+					      numb.setAttribute('readonly','readonly');
+					      numb.setAttribute('value','你当前得分为:'+num);
+					      document.body.appendChild(numb);
+					      var tip = document.createElement('input');
+					      tip.setAttribute('type','text');
+					      tip.setAttribute('readonly','readonly');
+					      tip.setAttribute('value','空格键开始或暂停');
+					      document.body.appendChild(tip);
+				//蛇节的宽高
+				this.width = 1;
+				this.height = 1;
+				//蛇节的定位
+				this.position = 'absolute';
+				this.direction = 'RIGHT'; //默认往右跑的
+				//保存每一节
+				this.body = [
+					[2, 0, 'lightblue', null], //蛇头，横纵坐标，背景色，dom对象
+					[1, 0, 'yellow', null],
+					[0, 0, 'yellow', null],
+				];
+				this.createsnake= function() {
+					      
+						//创建每一个蛇节，并展示出来
+						for(var i = 0; i < this.body.length; ++i) {
+							if(!this.body[i][3]) {
+								//创建蛇节
+								var ele = document.createElement('div');
+								//设置属性
+								ele.style.width = this.width * default_size + 'px';
+								ele.style.height = this.height * default_size + 'px';
+								ele.style.left = this.body[i][0] * default_size + 'px';
+								ele.style.top = this.body[i][1] * default_size + 'px';
+								ele.style.position = this.position;
+								ele.style.background = this.body[i][2];
+								map._map.appendChild(ele);
+								this.body[i][3] = ele;
+							} else {
+								this.body[i][3].style.left = this.body[i][0] * default_size + 'px';
+								this.body[i][3].style.top = this.body[i][1] * default_size + 'px';
+							}
+						}
+					},
+					this.move = function() {
+						//蛇头要跟行进方向有关
+						//从后往前动，避免蛇节互相覆盖的问题
+						for(var i = this.body.length - 1; i >= 1; --i) {
+							//蛇尾等于前面一个
+							this.body[i][0] = this.body[i - 1][0];
+							this.body[i][1] = this.body[i - 1][1];
+						}
+						switch(this.direction) {
+							case 'RIGHT':
+								this.body[0][0] += 1; //默认往右跑，所以横坐标+1
+								break;
+							case 'LEFT':
+								this.body[0][0] -= 1; //左跑，所以横坐标-1
+								break;
+							case 'UP':
+								this.body[0][1] -= 1; //上跑，所以横坐标-1
+								break;
+							case 'DOWN':
+								this.body[0][1] += 1; //下跑，所以横坐标+1
+								break;
+						}
+						//判断蛇头是否碰到食物
+						//要注意不要直接复制对象，即使后续清空某个对象也没有用
+						if(this.body[0][0] == food.left && this.body[0][1] == food.top) {
+							//增长
+							var tmp = [this.body[1][0], this.body[1][1], 'yellow', null];
+							this.body.push(tmp);
+							//分数
+							num++;
+					      numb.setAttribute('value','你当前得分为:'+num);
+							//食物重新设定位置
+							food.createfood();
+						}
+						//判断是否撞墙
+						//横纵小于0，横纵等于边框width和height
+						if(this.body[0][0] == map.width || this.body[0][0] < 0 || this.body[0][1] == map.height || this.body[0][1] < 0) {
+							alert('game over');
+							clearInterval(id);
+						}
+						//不能撞上自己
+						for(var i = 1; i < this.body.length; ++i) {
+							if(this.body[0][0] == this.body[i][0] && this.body[0][1] == this.body[i][1]) {
+								alert('Game Over');
+								clearInterval(id);
+							}
+						}
+						this.createsnake();
+					},
+					this.changeDirection = function(keyCode) {
+						console.debug(keyCode)
+						//左跑时不能按右键，上跑不能按下键，右下同
+						if(keyCode == 37 && this.direction != 'RIGHT') {
+							this.direction = 'LEFT';
+						} else if(keyCode == 38 && this.direction != 'DOWN') {
+							this.direction = 'UP';
+						} else if(keyCode == 39 && this.direction != 'LEFT') {
+							this.direction = 'RIGHT';
+						} else if(keyCode == 40 && this.direction != 'UP') {
+							this.direction = 'DOWN';
+						}
+						//空格暂停或开始 用计时器id的值进行判断 如果为null则开始 如果不为null则暂停
+						if(keyCode==32 && id==null){
+							startsnake();
+						}else if(keyCode==32){
+							pausesnake();
+						}
+					}
+			}
+		var num=0;	
+		var map = new Map();
+		var food = new Food();
+		var snake = new Snake();
+		var id = null;
+		
+		function startsnake(){
+							//使用计时器
+				id= setInterval("snake.move()", 120)
+		}
+		function pausesnake(){
+							//清除计时器，同时设置id为null方便空格暂停或开始判断
+				clearInterval(id);
+				id=null;
+		}
+		var game = new Game();
+		game.start();
+		function Game(){
+			this.start = function(){
+				if(map._map){
+					document.body.removeChild(map._map);
+				}
+				//没有开始过游戏就创建地图，食物，蛇三个节点
+				map.createmap();
+				food.createfood();
+				snake.createsnake();
+
+				document.documentElement.onkeydown = function() {
+					var keyCode = event.keyCode;
+					snake.changeDirection(keyCode);
+				}
+			}
+		}
+		</script>
+	</body>
+</html>
